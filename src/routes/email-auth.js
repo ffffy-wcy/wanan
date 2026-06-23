@@ -77,11 +77,6 @@ router.post('/send', async (req, res) => {
     }
 
     const code = generateCode();
-    emailCodeStore.set(email, {
-      code,
-      expiresAt: now + CODE_TTL_MS,
-      lastSentAt: now
-    });
 
     try {
       const sent = await sendVerificationEmail(email, code);
@@ -93,6 +88,13 @@ router.post('/send', async (req, res) => {
       console.error('Resend send failed:', err);
       return res.status(500).json({ error: '邮件发送失败，请检查 Resend 配置' });
     }
+
+    // 邮件发送成功后再保存验证码，避免用户收到废码
+    emailCodeStore.set(email, {
+      code,
+      expiresAt: now + CODE_TTL_MS,
+      lastSentAt: now
+    });
 
     return res.json({ ok: true, message: '验证码已发送' });
   } catch (err) {
