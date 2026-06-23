@@ -1,4 +1,32 @@
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
+
+const ROOT_DIR = path.join(__dirname, '..');
+
+require('dotenv').config({ path: path.join(ROOT_DIR, '.env') });
+
+function readFileSafe(filePath) {
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch (_err) {
+    return '';
+  }
+}
+
+function getDatasourceProvider(schemaText) {
+  const match = schemaText.match(/provider\s*=\s*"([^"]+)"/);
+  return match ? match[1] : '';
+}
+
+function runPrisma(args) {
+  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  execFileSync(npx, ['prisma', ...args], {
+    cwd: ROOT_DIR,
+    env: process.env,
+    stdio: 'inherit'
+  });
+}
 
 function validateRuntimeEnv() {
   const requiredEnvVars = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'DATABASE_URL'];
@@ -10,17 +38,47 @@ function validateRuntimeEnv() {
 
   if (!/^postgres(?:ql)?:\/\//i.test(process.env.DATABASE_URL)) {
     console.error('Error: DATABASE_URL must be a PostgreSQL connection string for the current Prisma schema.');
-    console.error('       Example: postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public');
+    console.error('Example: postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public');
     process.exit(1);
   }
 }
 
+function preparePrismaRuntime() {
+  const appSchemaPath = path.join(ROOT_DIR, 'prisma', 'schema.prisma');
+  const generatedSchemaPath = path.join(ROOT_DIR, 'node_modules', '.prisma', 'client', 'schema.prisma');
+  const appSchema = readFileSafe(appSchemaPath);
+  let generatedSchema = readFileSafe(generatedSchemaPath);
+  const appProvider = getDatasourceProvider(appSchema);
+  let generatedProvider = getDatasourceProvider(generatedSchema);
+
+  if (appProvider !== 'postgresql') {
+    console.error(`Error: prisma/schema.prisma must use postgresql, got ${appProvider || 'unknown'}.`);
+    process.exit(1);
+  }
+
+  if (generatedProvider !== appProvider) {
+    console.warn(`Prisma client is stale or missing (generated provider: ${generatedProvider || 'unknown'}). Running prisma generate...`);
+    runPrisma(['generate']);
+    generatedSchema = readFileSafe(generatedSchemaPath);
+    generatedProvider = getDatasourceProvider(generatedSchema);
+  }
+
+  if (generatedProvider !== appProvider) {
+    console.error(`Error: Prisma client provider is ${generatedProvider || 'unknown'} after generate, expected ${appProvider}.`);
+    process.exit(1);
+  }
+
+  if (process.env.NODE_ENV === 'production' && process.env.SKIP_PRISMA_MIGRATE !== '1') {
+    runPrisma(['migrate', 'deploy']);
+  }
+}
+
 validateRuntimeEnv();
+preparePrismaRuntime();
 
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
-const path = require('path');
 const { initSocket } = require('./sync');
 
 const authRoutes = require('./routes/auth');
@@ -41,7 +99,6 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 
-// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/auth/email', emailAuthRoutes);
 app.use('/api/profile', profileRoutes);
@@ -54,17 +111,17 @@ app.use('/api/room/:roomId/location', locationRoutes);
 app.use('/api/room/:roomId/moments', momentRoutes);
 app.use('/api', exportRoutes);
 
-// Health check
-app.get('/api/health', (_req, res) => res.json({ ok: true, t: Date.now() }));
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, app: 'goodnight', dbProvider: 'postgresql', t: Date.now() });
+});
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, '..')));
+app.use(express.static(ROOT_DIR));
 
 const server = http.createServer(app);
 const io = initSocket(server);
 app.set('io', io);
 
 server.listen(PORT, () => {
-  console.log(`✅ goodnight · 后端已启动`);
-  console.log(`   本地访问: http://localhost:${PORT}`);
+  console.log('goodnight backend started');
+  console.log(`Local URL: http://localhost:${PORT}`);
 });
