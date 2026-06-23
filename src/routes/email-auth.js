@@ -1,34 +1,28 @@
 require('dotenv').config();
 const { Router } = require('express');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const prisma = require('../db.js');
 const { signAccessToken, signRefreshToken } = require('../utils/jwt.js');
 
 const router = Router();
 
-// 根据环境变量创建邮件发送器；未配置则回退到控制台输出
-const transporter = (() => {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;
-  return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT) || 465,
-    secure: (Number(SMTP_PORT) || 465) === 465,
-    auth: { user: SMTP_USER, pass: SMTP_PASS }
-  });
-})();
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev';
 
 async function sendVerificationEmail(to, code) {
-  if (!transporter) return false;
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
-  await transporter.sendMail({
-    from: `"晚安" <${from}>`,
+  if (!resend) return false;
+  const { data, error } = await resend.emails.send({
+    from: `晚安 <${RESEND_FROM}>`,
     to,
     subject: '【晚安】您的验证码',
     text: `您的验证码是：${code}，5 分钟内有效。`,
     html: `<p>您的验证码是：<strong>${code}</strong></p><p>5 分钟内有效，请勿泄露给他人。</p>`
   });
-  return true;
+  if (error) {
+    console.error('Resend send error:', error);
+    throw new Error('邮件发送失败');
+  }
+  return !!data;
 }
 
 // 内存验证码存储：email -> { code, expiresAt, lastSentAt }
@@ -92,12 +86,12 @@ router.post('/send', async (req, res) => {
     try {
       const sent = await sendVerificationEmail(email, code);
       if (!sent) {
-        // 未配置 SMTP 时回退到控制台输出
+        // 未配置 RESEND_API_KEY 时回退到控制台输出
         console.log(`[EMAIL] 邮箱 ${email} 的验证码是: ${code}`);
       }
     } catch (err) {
-      console.error('SMTP send failed:', err);
-      return res.status(500).json({ error: '邮件发送失败，请检查 SMTP 配置' });
+      console.error('Resend send failed:', err);
+      return res.status(500).json({ error: '邮件发送失败，请检查 Resend 配置' });
     }
 
     return res.json({ ok: true, message: '验证码已发送' });

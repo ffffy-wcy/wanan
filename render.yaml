@@ -16,16 +16,10 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
-      - key: SMTP_HOST
+      - key: RESEND_API_KEY
         sync: false
-      - key: SMTP_PORT
-        sync: false
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
-        sync: false
-      - key: SMTP_FROM
-        sync: false
+      - key: RESEND_FROM
+        value: onboarding@resend.dev
       - key: QQ_APP_ID
         sync: false
       - key: QQ_APP_KEY
