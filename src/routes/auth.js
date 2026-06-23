@@ -22,15 +22,20 @@ function hasProfile(user) {
 function userPublic(user) {
   return {
     id: user.id,
+    platform: user.platform,
     nickname: user.nickname,
     avatarUrl: user.avatarUrl,
     phone: user.phone,
+    email: user.email,
+    gender: user.gender,
+    anniversary: user.anniversary,
+    matchCode: user.matchCode,
     hasProfile: hasProfile(user)
   };
 }
 
 function makeTokens(user) {
-  const jwtPayload = { userId: user.id, platform: user.platform, openId: user.openId, phone: user.phone };
+  const jwtPayload = { userId: user.id, platform: user.platform, openId: user.openId, phone: user.phone, email: user.email };
   return {
     accessToken: signAccessToken(jwtPayload),
     refreshToken: signRefreshToken(jwtPayload),
@@ -114,7 +119,7 @@ router.post('/refresh', async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user) return res.status(401).json({ error: '用户不存在' });
 
-    const jwtPayload = { userId: user.id, platform: user.platform, openId: user.openId, phone: user.phone };
+    const jwtPayload = { userId: user.id, platform: user.platform, openId: user.openId, phone: user.phone, email: user.email };
     return res.json({
       accessToken: signAccessToken(jwtPayload),
       refreshToken: signRefreshToken(jwtPayload)
@@ -143,8 +148,10 @@ router.get('/me', auth, async (req, res) => {
         nickname: req.user.nickname,
         avatarUrl: req.user.avatarUrl,
         phone: req.user.phone,
+        email: req.user.email,
         gender: req.user.gender,
         anniversary: req.user.anniversary,
+        matchCode: req.user.matchCode,
         createdAt: req.user.createdAt,
         hasProfile: hasProfile(req.user),
         room: room ? { id: room.id, userAId: room.userAId, userBId: room.userBId, createdAt: room.createdAt } : null,

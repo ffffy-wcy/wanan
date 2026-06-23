@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#2a1810" />
+  <meta name="theme-color" content="#f7f1e8" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>晚安</title>
+  <title>goodnight</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -20,7 +20,7 @@
     <!-- 顶部栏 -->
     <header class="topbar">
       <div class="topbar-inner">
-        <span class="brand" id="brandTitle">晚安</span>
+        <span class="brand" id="brandTitle">goodnight</span>
         <span class="sub" id="subTitle">距离不是问题</span>
       </div>
     </header>
@@ -30,9 +30,7 @@
       <!-- 1. 首页 -->
       <section class="view view-home active" data-view="home">
         <div class="home-hero">
-          <div class="heart" aria-hidden="true">
-            <svg viewBox="0 0 64 64"><path d="M32 58s-24-14-24-34a14 14 0 0 1 24-10 14 14 0 0 1 24 10c0 20-24 34-24 34z" fill="currentColor"/></svg>
-          </div>
+          <div class="heart" aria-hidden="true">❤</div>
           <p class="since-label">我们已经在一起</p>
           <div class="days-number" id="daysNumber">0</div>
           <p class="since-date" id="sinceDate">—</p>
@@ -92,6 +90,10 @@
           <div class="battery-row">
             <div class="battery-cell"><span class="battery-label">我的电量</span><span id="meBattery">—</span></div>
             <div class="battery-cell"><span class="battery-label">ta 的电量</span><span id="taBattery">—</span></div>
+          </div>
+          <div class="device-row">
+            <div class="device-cell"><span class="device-label">我的设备</span><span id="meDevice">—</span></div>
+            <div class="device-cell"><span class="device-label">ta 的网络</span><span id="taNetwork">—</span></div>
           </div>
         </div>
 
@@ -206,6 +208,7 @@
           <div class="status-card"><span class="status-icon">📶</span><span class="status-label">网络速度</span><span class="status-value" id="stSpeed">—</span></div>
           <div class="status-card"><span class="status-icon">🔋</span><span class="status-label">电量</span><span class="status-value" id="stBattery">—</span></div>
           <div class="status-card"><span class="status-icon">💾</span><span class="status-label">存储占用</span><span class="status-value" id="stStorage">—</span></div>
+          <div class="status-card wide"><span class="status-icon">♡</span><span class="status-label">ta 的手机</span><span class="status-value" id="stPartnerDevice">等待同步</span></div>
           <div class="status-card wide"><span class="status-icon">📡</span><span class="status-label">流量使用</span><span class="status-value" id="stTraffic">本设备暂不支持</span></div>
           <div class="status-card wide"><span class="status-icon">📞</span><span class="status-label">通话记录</span><span class="status-value" id="stCalls">本设备暂不支持</span></div>
         </div>

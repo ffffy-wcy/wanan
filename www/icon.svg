@@ -1,11 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#f5ecdc"/>
-  <!-- heart pink body -->
+  <rect width="512" height="512" rx="108" fill="#f7f1e8"/>
   <path d="M 256 380 C 100 270 60 180 120 130 C 180 80 240 120 256 170 C 272 120 332 80 392 130 C 452 180 412 270 256 380 Z"
-    fill="#ff7ba8" stroke="#2a1810" stroke-width="10" stroke-linejoin="round"/>
-  <!-- little sparkle -->
-  <path d="M 130 370 l -8 -22 l -8 22 l -22 8 l 22 8 l 8 22 l 8 -22 l 22 -8 z" fill="#ff7ba8" stroke="#2a1810" stroke-width="6" stroke-linejoin="round"/>
-  <circle cx="400" cy="400" r="10" fill="#ff7ba8" stroke="#2a1810" stroke-width="6"/>
-  <!-- "anwan" cursive text inside heart -->
-  <text x="256" y="230" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="72" font-weight="700" fill="#2a1810">anwan</text>
+    fill="#ee3f86" stroke="#253047" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M 126 378 l -9 -26 l -9 26 l -26 9 l 26 9 l 9 26 l 9 -26 l 26 -9 z" fill="#ffe066" stroke="#253047" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="398" cy="402" r="12" fill="#58d5e8" stroke="#253047" stroke-width="5"/>
+  <text x="256" y="235" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="58" font-weight="700" fill="#ffffff">good</text>
+  <text x="256" y="292" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="58" font-weight="700" fill="#ffffff">night</text>
 </svg>

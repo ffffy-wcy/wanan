@@ -1,4 +1,4 @@
-package com.example.ourdays;
+package com.goodnight.app;
 
 import com.getcapacitor.BridgeActivity;
 

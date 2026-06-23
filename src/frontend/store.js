@@ -1,5 +1,5 @@
 /* =========================================================
-   晚安 store.js
+   goodnight store.js
    简单前端状态管理模块
    ========================================================= */
 const Store = {
@@ -32,18 +32,20 @@ const Store = {
 
   loadUser() {
     try {
-      const raw = localStorage.getItem('wanan_user');
+      const raw = localStorage.getItem('goodnight_user') || localStorage.getItem('wanan_user');
       if (raw) this.state.user = JSON.parse(raw);
     } catch(e) {}
   },
 
   saveUser(user) {
     this.state.user = user;
+    localStorage.setItem('goodnight_user', JSON.stringify(user));
     localStorage.setItem('wanan_user', JSON.stringify(user));
   },
 
   clearUser() {
     this.state.user = null;
+    localStorage.removeItem('goodnight_user');
     localStorage.removeItem('wanan_user');
   }
 };

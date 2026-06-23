@@ -1,4 +1,22 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+
+function validateRuntimeEnv() {
+  const requiredEnvVars = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'DATABASE_URL'];
+  const missing = requiredEnvVars.filter((name) => !process.env[name]);
+  if (missing.length) {
+    console.error(`Error: Missing required environment variable(s): ${missing.join(', ')}`);
+    process.exit(1);
+  }
+
+  if (!/^postgres(?:ql)?:\/\//i.test(process.env.DATABASE_URL)) {
+    console.error('Error: DATABASE_URL must be a PostgreSQL connection string for the current Prisma schema.');
+    console.error('       Example: postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public');
+    process.exit(1);
+  }
+}
+
+validateRuntimeEnv();
+
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
@@ -6,7 +24,6 @@ const path = require('path');
 const { initSocket } = require('./sync');
 
 const authRoutes = require('./routes/auth');
-const smsAuthRoutes = require('./routes/sms-auth');
 const emailAuthRoutes = require('./routes/email-auth');
 const profileRoutes = require('./routes/profile');
 const pairRoutes = require('./routes/pair');
@@ -26,7 +43,6 @@ app.use(express.json({ limit: '5mb' }));
 
 // API routes
 app.use('/api/auth', authRoutes);
-app.use('/api/auth/sms', smsAuthRoutes);
 app.use('/api/auth/email', emailAuthRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/pair', pairRoutes);
@@ -49,6 +65,6 @@ const io = initSocket(server);
 app.set('io', io);
 
 server.listen(PORT, () => {
-  console.log(`✅ 晚安 · 后端已启动`);
+  console.log(`✅ goodnight · 后端已启动`);
   console.log(`   本地访问: http://localhost:${PORT}`);
 });

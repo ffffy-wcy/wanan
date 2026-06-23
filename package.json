@@ -1,13 +1,15 @@
 {
-  "name": "wanan",
+  "name": "goodnight",
   "version": "1.0.0",
-  "description": "晚安 · 异地情侣数据同步 App",
+  "description": "goodnight · 面向情侣的陪伴与守护 App",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "build": "npx prisma generate",
     "postinstall": "npx prisma generate",
-    "test": "echo \"no tests configured\"",
+    "test": "node scripts/smoke-email-auth.js && node scripts/smoke-ui.js",
+    "test:api": "node scripts/smoke-email-auth.js",
+    "test:ui": "node scripts/smoke-ui.js",
     "sync:www": "node scripts/sync-www.js",
     "db:migrate": "npx prisma migrate deploy",
     "db:migrate:dev": "npx prisma migrate dev --name init",
@@ -29,6 +31,7 @@
     "express": "^4.22.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.2.0",
+    "nodemailer": "^6.10.1",
     "playwright": "^1.61.0",
     "resend": "^6.14.0",
     "socket.io": "^4.8.1"

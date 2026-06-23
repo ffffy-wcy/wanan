@@ -1,6 +1,14 @@
 require('dotenv').config();
 const { Router } = require('express');
 const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
+const {
+  PrismaClientKnownRequestError,
+  PrismaClientUnknownRequestError,
+  PrismaClientRustPanicError,
+  PrismaClientInitializationError,
+  PrismaClientValidationError
+} = require('@prisma/client');
 const prisma = require('../db.js');
 const { signAccessToken, signRefreshToken } = require('../utils/jwt.js');
 
@@ -9,20 +17,52 @@ const router = Router();
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev';
 
+const smtpTransporter = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
+  ? nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 465),
+      secure: String(process.env.SMTP_PORT || 465) === '465',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      }
+    })
+  : null;
+const SMTP_FROM = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+function normalizeEmail(value) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
 async function sendVerificationEmail(to, code) {
-  if (!resend) return false;
-  const { data, error } = await resend.emails.send({
-    from: `晚安 <${RESEND_FROM}>`,
+  const message = {
     to,
-    subject: '【晚安】您的验证码',
-    text: `您的验证码是：${code}，5 分钟内有效。`,
-    html: `<p>您的验证码是：<strong>${code}</strong></p><p>5 分钟内有效，请勿泄露给他人。</p>`
-  });
-  if (error) {
-    console.error('Resend send error:', error);
-    throw new Error('邮件发送失败');
+    subject: '【goodnight】您的验证码',
+    text: `您的 goodnight 验证码是：${code}，5 分钟内有效。`,
+    html: `<p>您的 goodnight 验证码是：<strong>${code}</strong></p><p>5 分钟内有效，请勿泄露给他人。</p>`
+  };
+
+  if (resend) {
+    const { data, error } = await resend.emails.send({
+      from: `goodnight <${RESEND_FROM}>`,
+      ...message
+    });
+    if (error) {
+      console.error('Resend send error:', error);
+      throw new Error('邮件发送失败');
+    }
+    return !!data;
   }
-  return !!data;
+
+  if (smtpTransporter) {
+    await smtpTransporter.sendMail({
+      from: `goodnight <${SMTP_FROM}>`,
+      ...message
+    });
+    return true;
+  }
+
+  return false;
 }
 
 // 内存验证码存储：email -> { code, expiresAt, lastSentAt }
@@ -45,16 +85,20 @@ function hasProfile(user) {
 function userPublic(user) {
   return {
     id: user.id,
+    platform: user.platform,
     nickname: user.nickname,
     avatarUrl: user.avatarUrl,
     phone: user.phone,
     email: user.email,
+    gender: user.gender,
+    anniversary: user.anniversary,
+    matchCode: user.matchCode,
     hasProfile: hasProfile(user)
   };
 }
 
 function makeTokens(user) {
-  const jwtPayload = { userId: user.id, platform: user.platform, email: user.email };
+  const jwtPayload = { userId: user.id, platform: user.platform, openId: user.openId, phone: user.phone, email: user.email };
   return {
     accessToken: signAccessToken(jwtPayload),
     refreshToken: signRefreshToken(jwtPayload),
@@ -65,7 +109,7 @@ function makeTokens(user) {
 // POST /api/auth/email/send
 router.post('/send', async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = normalizeEmail(req.body && req.body.email);
     if (!email || !isValidEmail(email)) {
       return res.status(400).json({ error: '邮箱格式不正确' });
     }
@@ -106,7 +150,8 @@ router.post('/send', async (req, res) => {
 // POST /api/auth/email/login
 router.post('/login', async (req, res) => {
   try {
-    const { email, code } = req.body;
+    const email = normalizeEmail(req.body && req.body.email);
+    const code = String((req.body && req.body.code) || '').trim();
     if (!email || !isValidEmail(email)) {
       return res.status(400).json({ error: '邮箱格式不正确' });
     }
@@ -126,23 +171,41 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: '验证码错误，请重新输入' });
     }
 
-    emailCodeStore.delete(email);
+    try {
+      let user = await prisma.user.findUnique({ where: { email } });
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            platform: 'email',
+            email,
+            nickname: email.split('@')[0]
+          }
+        });
+      }
 
-    let user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          platform: 'email',
-          email,
-          nickname: email.split('@')[0]
-        }
-      });
+      try {
+        const tokens = makeTokens(user);
+        emailCodeStore.delete(email);
+        return res.json(tokens);
+      } catch (jwtErr) {
+        console.error('Email login JWT error:', jwtErr);
+        return res.status(500).json({ error: '登录服务配置异常' });
+      }
+    } catch (err) {
+      if (
+        err instanceof PrismaClientKnownRequestError ||
+        err instanceof PrismaClientUnknownRequestError ||
+        err instanceof PrismaClientRustPanicError ||
+        err instanceof PrismaClientInitializationError ||
+        err instanceof PrismaClientValidationError
+      ) {
+        console.error('Email login database error:', err);
+        return res.status(500).json({ error: '登录服务暂不可用' });
+      }
+      throw err;
     }
-
-    const tokens = makeTokens(user);
-    return res.json(tokens);
   } catch (err) {
-    console.error('Email login error:', err);
+    console.error('Email login unexpected error:', err);
     return res.status(500).json({ error: '服务器内部错误' });
   }
 });

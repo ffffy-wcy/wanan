@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: wanan-api
+    name: goodnight-api
     env: node
     region: singapore
     plan: free

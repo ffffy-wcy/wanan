@@ -51,8 +51,10 @@ router.patch('/', auth, async (req, res) => {
         nickname: user.nickname,
         avatarUrl: user.avatarUrl,
         phone: user.phone,
+        email: user.email,
         gender: user.gender,
         anniversary: user.anniversary,
+        matchCode: user.matchCode,
         hasProfile: hasProfile(user)
       }
     });

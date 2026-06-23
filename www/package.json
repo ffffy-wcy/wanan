@@ -1,7 +1,7 @@
 {
-  "name": "wanan",
+  "name": "goodnight",
   "version": "1.0.0",
-  "description": "晚安 · 异地情侣数据同步 App",
+  "description": "goodnight · 面向情侣的陪伴与守护 App",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

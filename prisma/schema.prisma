@@ -93,6 +93,7 @@ model Location {
   lat       String   @default("")
   lng       String   @default("")
   battery   String?
+  device    String?
   updatedAt DateTime @updatedAt
 }
 

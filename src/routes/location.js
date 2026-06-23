@@ -19,9 +19,10 @@ router.get('/', auth, roomGuard, async (req, res) => {
 // PUT /api/room/:roomId/location - 更新当前用户位置
 router.put('/', auth, roomGuard, async (req, res) => {
   try {
-    const { city, lat, lng, battery } = req.body;
+    const { city, lat, lng, battery, device } = req.body;
 
     const batteryStr = battery ? JSON.stringify(battery) : undefined;
+    const deviceStr = device ? JSON.stringify(device) : undefined;
 
     // 查找现有记录
     const existing = await prisma.location.findFirst({
@@ -39,7 +40,8 @@ router.put('/', auth, roomGuard, async (req, res) => {
           city: city !== undefined ? city : existing.city,
           lat: lat !== undefined ? lat : existing.lat,
           lng: lng !== undefined ? lng : existing.lng,
-          battery: batteryStr !== undefined ? batteryStr : existing.battery
+          battery: batteryStr !== undefined ? batteryStr : existing.battery,
+          device: deviceStr !== undefined ? deviceStr : existing.device
         }
       });
     } else {
@@ -50,7 +52,8 @@ router.put('/', auth, roomGuard, async (req, res) => {
           city: city || '',
           lat: lat || '',
           lng: lng || '',
-          battery: batteryStr || null
+          battery: batteryStr || null,
+          device: deviceStr || null
         }
       });
     }

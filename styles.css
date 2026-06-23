@@ -1,21 +1,24 @@
 /* =========================================================
-   晚安 · 异地情侣 App 样式
-   视觉基调：温暖 · 沉静 · 陪伴感
-   色板：深玫瑰金 #b76e79 / 暖米 #f5ecdc / 深咖 #2a1810
+   goodnight · 情侣 App 样式
+   视觉基调：清透、柔和、陪伴感
    ========================================================= */
 
 :root {
-  --bg: #f5ecdc;
-  --bg-soft: #efe4cf;
-  --ink: #2a1810;
-  --ink-soft: #6b4a3a;
-  --ink-mute: #9a7f6d;
-  --accent: #b76e79;
-  --accent-deep: #8e4a55;
-  --line: rgba(42, 24, 16, 0.12);
-  --line-soft: rgba(42, 24, 16, 0.06);
-  --card: #fffaf1;
-  --shadow: 0 6px 24px rgba(42, 24, 16, 0.08);
+  --bg: #f7f1e8;
+  --bg-soft: #fff9f4;
+  --ink: #253047;
+  --ink-soft: #596176;
+  --ink-mute: #9ca2b2;
+  --accent: #ee3f86;
+  --accent-deep: #c82e6b;
+  --accent-soft: #ffe4ee;
+  --sun: #ffe066;
+  --aqua: #58d5e8;
+  --leaf: #cfeeb0;
+  --line: rgba(37, 48, 71, 0.12);
+  --line-soft: rgba(37, 48, 71, 0.07);
+  --card: #ffffff;
+  --shadow: 0 16px 40px rgba(238, 63, 134, 0.10);
   --radius: 20px;
   --serif: 'DM Serif Display', 'Noto Serif SC', 'Songti SC', 'Playfair Display', Georgia, serif;
   --body: 'Noto Serif SC', system-ui, -apple-system, 'PingFang SC', sans-serif;
@@ -26,11 +29,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1e1410;
-    --bg-soft: #261a14;
+    --bg: #181923;
+    --bg-soft: #222433;
     --ink: #f1e4d0;
-    --ink-soft: #c7b39c;
-    --ink-mute: #8f7d68;
+    --ink-soft: #c8cadd;
+    --ink-mute: #8f94a8;
     --line: rgba(241, 228, 208, 0.14);
     --line-soft: rgba(241, 228, 208, 0.06);
     --card: #2a1b14;
@@ -54,8 +57,9 @@ body::before {
   content: '';
   position: fixed; inset: 0;
   background:
-    radial-gradient(1200px 600px at 50% -10%, rgba(183,110,121,0.08), transparent 60%),
-    radial-gradient(800px 400px at 100% 110%, rgba(183,110,121,0.05), transparent 60%);
+    linear-gradient(180deg, rgba(255, 234, 243, 0.74), rgba(247, 241, 232, 0.25) 34%, rgba(248, 251, 236, 0.58) 100%),
+    radial-gradient(900px 420px at 20% -8%, rgba(88,213,232,0.18), transparent 58%),
+    radial-gradient(760px 360px at 90% 105%, rgba(255,224,102,0.26), transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -77,6 +81,7 @@ body::before {
 }
 .topbar-inner { display: flex; flex-direction: column; align-items: flex-start; }
 .brand { font-family: var(--serif); font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+.brand::first-letter { color: var(--accent); }
 .sub { font-size: 12px; color: var(--ink-mute); letter-spacing: 2px; margin-top: 2px; }
 
 /* ====== 内容区 ====== */
@@ -124,6 +129,8 @@ body::before {
 .heart {
   width: 44px; height: 44px; margin: 0 auto 18px;
   color: var(--accent);
+  font-size: 40px;
+  line-height: 44px;
   animation: beat 1.6s ease-in-out infinite;
 }
 .heart svg { width: 100%; height: 100%; display: block; }
@@ -252,8 +259,9 @@ button.primary, button.ghost, .sw-btn {
   transition: transform 120ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease;
 }
 button.primary, .sw-btn.primary {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(238, 63, 134, 0.22);
 }
 button.primary:hover, .sw-btn.primary:hover { background: var(--accent-deep); }
 button.primary:active, .sw-btn.primary:active { transform: translateY(1px); }
@@ -265,7 +273,7 @@ button.ghost, .sw-btn.ghost {
 button.ghost:hover, .sw-btn.ghost:hover { color: var(--accent-deep); border-color: var(--accent); }
 .sw-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.sw-btn.qq { background: #12b7f5; color: #fff; border-color: #12b7f5; }
+.sw-btn.qq { background: #20b7ee; color: #fff; border-color: #20b7ee; box-shadow: 0 12px 24px rgba(32, 183, 238, 0.18); }
 
 .sw-form-err {
   color: #c0392b; font-size: 13px; text-align: center;
@@ -353,6 +361,34 @@ button.ghost:hover, .sw-btn.ghost:hover { color: var(--accent-deep); border-colo
   font-family: var(--serif);
   font-size: 16px;
   color: var(--ink);
+}
+
+.device-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.device-cell {
+  min-width: 0;
+  background: color-mix(in srgb, var(--bg) 70%, #fff);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.device-label {
+  font-size: 11px;
+  color: var(--ink-mute);
+  letter-spacing: 1px;
+}
+#meDevice, #taNetwork {
+  color: var(--ink);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ====== 纪念日列表 ====== */
@@ -924,6 +960,8 @@ button.ghost:hover, .sw-btn.ghost:hover { color: var(--accent-deep); border-colo
   color: var(--accent);
   animation: beat 1.6s ease-in-out infinite;
   margin-bottom: 24px;
+  font-size: 54px;
+  line-height: 1;
 }
 
 .flow-title {
@@ -1006,6 +1044,196 @@ button.ghost:hover, .sw-btn.ghost:hover { color: var(--accent-deep); border-colo
   text-align: center;
   box-shadow: var(--shadow);
   margin-bottom: 10px;
+}
+
+.brand-flow {
+  flex: 1;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 28px;
+}
+.brand-art {
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-orbit {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 50%, #fff 0 35%, transparent 36%),
+    conic-gradient(from 120deg, rgba(238,63,134,0.18), rgba(88,213,232,0.22), rgba(255,224,102,0.25), rgba(238,63,134,0.18));
+  box-shadow: 0 28px 70px rgba(238, 63, 134, 0.18);
+}
+.brand-heart {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 68px;
+  text-shadow: 0 14px 28px rgba(238,63,134,0.25);
+}
+.brand-dot.one,
+.brand-dot.two {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--sun);
+  box-shadow: 0 12px 28px rgba(255, 224, 102, 0.35);
+}
+.brand-dot.one { top: 16px; right: 28px; }
+.brand-dot.two { left: 18px; bottom: 28px; background: var(--aqua); }
+.brand-copy { text-align: left; }
+.brand-mark {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 20px;
+  letter-spacing: 1px;
+}
+.brand-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 34px;
+  line-height: 1.22;
+  letter-spacing: 0;
+}
+.brand-sub {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  line-height: 1.8;
+  font-size: 15px;
+}
+.brand-dots {
+  display: flex;
+  gap: 8px;
+}
+.brand-dot-step {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(37,48,71,0.16);
+  transition: width 180ms ease, background 180ms ease;
+}
+.brand-dot-step.active {
+  width: 28px;
+  background: var(--accent);
+}
+.brand-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-skip,
+.brand-next {
+  border: 0;
+  border-radius: 18px;
+  padding: 14px 18px;
+  font: inherit;
+  cursor: pointer;
+}
+.brand-skip {
+  background: transparent;
+  color: var(--ink-mute);
+}
+.brand-next {
+  flex: 1;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 16px 32px rgba(238, 63, 134, 0.22);
+}
+
+.linkup-card {
+  position: relative;
+  border: 4px solid var(--sun);
+  box-shadow: none;
+  padding: 28px 16px 20px;
+}
+.pair-download {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 54px;
+  height: 54px;
+  border-radius: 0 16px 0 26px;
+  background: var(--sun);
+  color: #a98200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+}
+.pair-symbol {
+  font-size: 36px;
+  color: var(--ink);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.pair-hint {
+  margin: 14px 0 0;
+  color: var(--ink-mute);
+  font-size: 14px;
+}
+.pair-options {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 8px 0 10px;
+}
+.pair-option {
+  display: grid;
+  grid-template-columns: 44px 1fr 18px;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 4px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  color: var(--ink);
+  font: inherit;
+}
+.pair-option-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.pair-option-icon.blue { background: #42b7ef; }
+.pair-option-icon.purple { background: #8d5df6; }
+.pair-option-icon.qq { background: #4aa4ec; }
+.pair-option b {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 3px;
+}
+.pair-option em {
+  display: block;
+  font-style: normal;
+  color: var(--ink-mute);
+  font-size: 12px;
+}
+.pair-option i {
+  font-style: normal;
+  color: var(--ink-mute);
+  font-size: 28px;
 }
 .pair-code-label {
   font-size: 12px;

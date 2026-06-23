@@ -1,5 +1,5 @@
-/* Our Days · service worker - 离线缓存 */
-const CACHE = 'wanan-v4';
+/* goodnight · service worker - 离线缓存 */
+const CACHE = 'goodnight-v1';
 const ASSETS = [
   './',
   './index.html',

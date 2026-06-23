@@ -20,7 +20,7 @@ router.get('/export', auth, async (req, res) => {
       exportedAt: new Date().toISOString(),
       roomId: null,
       settings: null,
-      wall: [],
+      moments: [],
       wishes: [],
       anniversaries: [],
       moods: [],
@@ -31,13 +31,13 @@ router.get('/export', auth, async (req, res) => {
       result.roomId = room.id;
 
       const [
-        wallEntries,
+        moments,
         wishes,
         anniversaries,
         moods,
         locations
       ] = await Promise.all([
-        prisma.wallEntry.findMany({ where: { roomId: room.id } }),
+        prisma.moment.findMany({ where: { roomId: room.id }, orderBy: { createdAt: 'desc' } }),
         prisma.wish.findMany({ where: { roomId: room.id } }),
         prisma.anniversary.findMany({ where: { roomId: room.id } }),
         prisma.mood.findMany({ where: { roomId: room.id } }),
@@ -50,7 +50,7 @@ router.get('/export', auth, async (req, res) => {
         sinceDate: room.sinceDate,
         nextMeetDate: room.nextMeetDate
       };
-      result.wall = wallEntries;
+      result.moments = moments;
       result.wishes = wishes;
       result.anniversaries = anniversaries;
       result.moods = moods;

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">晚安</string>
-    <string name="title_activity_main">晚安</string>
-    <string name="package_name">com.example.ourdays</string>
-    <string name="custom_url_scheme">com.example.ourdays</string>
+    <string name="app_name">goodnight</string>
+    <string name="title_activity_main">goodnight</string>
+    <string name="package_name">com.goodnight.app</string>
+    <string name="custom_url_scheme">com.goodnight.app</string>
 </resources>

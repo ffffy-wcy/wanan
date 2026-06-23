@@ -1,13 +1,13 @@
 {
-  "name": "晚安",
-  "short_name": "晚安",
-  "description": "异地情侣的温暖时光记录 — 在一起的天数、时光墙、心愿清单、纪念日、心情打卡",
+  "name": "goodnight",
+  "short_name": "goodnight",
+  "description": "面向情侣的陪伴与守护 App：品牌引导、邮箱登录、配对、实时定位、双方手机状态、电量与心情同步。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f5ecdc",
-  "theme_color": "#2a1810",
+  "background_color": "#f7f1e8",
+  "theme_color": "#f7f1e8",
   "lang": "zh-CN",
   "icons": [
     {
@@ -25,8 +25,8 @@
   ],
   "shortcuts": [
     {
-      "name": "写下今日",
-      "url": "./index.html#wall"
+      "name": "打开 goodnight",
+      "url": "./index.html"
     }
   ],
   "categories": ["social", "lifestyle"],

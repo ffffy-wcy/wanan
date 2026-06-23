@@ -12,9 +12,14 @@ function hasProfile(user) {
 function userPublic(user) {
   return {
     id: user.id,
+    platform: user.platform,
     nickname: user.nickname,
     avatarUrl: user.avatarUrl,
     phone: user.phone,
+    email: user.email,
+    gender: user.gender,
+    anniversary: user.anniversary,
+    matchCode: user.matchCode,
     hasProfile: hasProfile(user)
   };
 }
@@ -119,7 +124,14 @@ router.post('/join', auth, async (req, res) => {
 
     if (!room) {
       room = await prisma.room.create({
-        data: { userAId: req.user.id, userBId: partner.id }
+        data: {
+          userAId: req.user.id,
+          userBId: partner.id,
+          meName: req.user.nickname || '',
+          taName: partner.nickname || '',
+          sinceDate: req.user.anniversary ? req.user.anniversary.toISOString().slice(0, 10) : '',
+          nextMeetDate: ''
+        }
       });
     }
 

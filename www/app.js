@@ -52,6 +52,57 @@
   let mapLine = null;
   let mapDistanceLabel = null;
 
+  function getConnectionInfo() {
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!conn) return null;
+    return {
+      effectiveType: conn.effectiveType || '',
+      downlink: typeof conn.downlink === 'number' ? conn.downlink : null,
+      rtt: typeof conn.rtt === 'number' ? conn.rtt : null,
+      saveData: !!conn.saveData,
+    };
+  }
+
+  function getDeviceLabel() {
+    const ua = navigator.userAgent || '';
+    const androidMatch = ua.match(/Android\s+[^;]+;\s*([^;)]+)\s+Build/i);
+    if (androidMatch && androidMatch[1]) return androidMatch[1].trim();
+    if (/iPhone/i.test(ua)) return 'iPhone';
+    if (/iPad/i.test(ua)) return 'iPad';
+    if (/Windows/i.test(ua)) return 'Windows';
+    if (/Mac OS X/i.test(ua)) return 'Mac';
+    return navigator.platform || '设备';
+  }
+
+  function buildDeviceStatus() {
+    return {
+      label: getDeviceLabel(),
+      platform: navigator.platform || '',
+      online: navigator.onLine,
+      network: getConnectionInfo(),
+      screen: window.screen ? `${window.screen.width}x${window.screen.height}` : '',
+      language: navigator.language || '',
+      updatedAt: Date.now(),
+    };
+  }
+
+  function syncPresence(payload = {}) {
+    const room = Store.getState().room;
+    if (!room) return Promise.resolve();
+    return API.put(`/api/room/${room.id}/location`, {
+      ...payload,
+      device: buildDeviceStatus(),
+    }).then((data) => {
+      if (data && data.location) {
+        const locations = Store.getState().locations;
+        const idx = locations.findIndex(l => l.id === data.location.id || l.userId === data.location.userId);
+        if (idx >= 0) locations[idx] = data.location;
+        else locations.push(data.location);
+        Store.setState({ locations: [...locations] });
+      }
+    }).catch(() => {});
+  }
+
   function startLocationTracking() {
     if (!navigator.geolocation) {
       locationStatus = 'unsupported';
@@ -68,10 +119,7 @@
         const lng = Number(pos.coords.longitude.toFixed(6));
         locationStatus = 'located';
 
-        const room = Store.getState().room;
-        if (room) {
-          API.put(`/api/room/${room.id}/location`, { lat: String(lat), lng: String(lng) }).catch(() => {});
-        }
+        syncPresence({ lat: String(lat), lng: String(lng) });
 
         renderMeta();
       },
@@ -215,24 +263,84 @@
   }
 
   function showBrand(onDone) {
+    const slides = [
+      {
+        mark: 'goodnight',
+        title: '在很远的地方，也能靠近一点',
+        sub: '看见彼此的位置、电量和今日状态，少一点担心，多一点安心。',
+      },
+      {
+        mark: 'always with you',
+        title: '把日常留下来',
+        sub: '纪念日、心愿、心情和照片，会慢慢变成你们自己的时间线。',
+      },
+      {
+        mark: 'only two',
+        title: '先找到亲密的 ta',
+        sub: '登录后完善资料，用配对码或二维码建立只属于你们的空间。',
+      },
+    ];
+
     const el = createFlowView('brandView', `
-      <div class="flow-center">
-        <div class="flow-heart"><svg viewBox="0 0 64 64" width="80" height="80"><path d="M32 58s-24-14-24-34a14 14 0 0 1 24-10 14 14 0 0 1 24 10c0 20-24 34-24 34z" fill="currentColor"/></svg></div>
-        <h1 class="flow-title">晚安</h1>
-        <p class="flow-sub">即使相隔千里，也能感受到彼此的温度</p>
+      <div class="brand-flow">
+        <div class="brand-art">
+          <div class="brand-orbit">
+            <span class="brand-dot one"></span>
+            <span class="brand-dot two"></span>
+            <span class="brand-heart">❤</span>
+          </div>
+        </div>
+        <div class="brand-copy">
+          <p class="brand-mark" id="brandMark"></p>
+          <h1 class="brand-title" id="brandFlowTitle"></h1>
+          <p class="brand-sub" id="brandFlowSub"></p>
+        </div>
+        <div class="brand-dots" id="brandDots"></div>
+        <div class="brand-actions">
+          <button type="button" class="brand-skip" id="brandSkip">跳过</button>
+          <button type="button" class="brand-next" id="brandNext">下一页</button>
+        </div>
       </div>
     `);
 
-    let done = false;
-    const finish = () => { if (!done) { done = true; onDone(); } };
-    el.addEventListener('click', finish);
-    setTimeout(finish, 1500);
+    let idx = 0;
+    const dots = $('#brandDots');
+    dots.innerHTML = slides.map((_, i) => `<span class="brand-dot-step" data-i="${i}"></span>`).join('');
+
+    const paint = () => {
+      const item = slides[idx];
+      $('#brandMark').textContent = item.mark;
+      $('#brandFlowTitle').textContent = item.title;
+      $('#brandFlowSub').textContent = item.sub;
+      $$('.brand-dot-step').forEach((dot, i) => dot.classList.toggle('active', i === idx));
+      $('#brandNext').textContent = idx === slides.length - 1 ? '开始' : '下一页';
+    };
+
+    const next = () => {
+      if (idx < slides.length - 1) {
+        idx += 1;
+        paint();
+      } else {
+        onDone();
+      }
+    };
+
+    $('#brandNext').addEventListener('click', next);
+    $('#brandSkip').addEventListener('click', onDone);
+    $$('.brand-dot-step').forEach(dot => dot.addEventListener('click', () => {
+      idx = Number(dot.dataset.i) || 0;
+      paint();
+    }));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === 'ArrowRight') next();
+    });
+    paint();
   }
 
   function showLogin() {
     const el = createFlowView('loginView', `
       <div class="flow-center" style="padding:40px 28px;">
-        <div class="flow-heart" style="margin-bottom:16px;"><svg viewBox="0 0 64 64" width="56" height="56"><path d="M32 58s-24-14-24-34a14 14 0 0 1 24-10 14 14 0 0 1 24 10c0 20-24 34-24 34z" fill="currentColor"/></svg></div>
+        <div class="flow-heart" style="margin-bottom:16px;">❤</div>
         <h1 class="flow-title" style="font-size:32px;">欢迎回来</h1>
         <p class="flow-sub" style="margin-bottom:28px;">用邮箱验证码或 QQ 登录</p>
 
@@ -370,7 +478,7 @@
     const el = createFlowView('profileView', `
       <div class="flow-center" style="padding:40px 28px;">
         <h1 class="flow-title" style="font-size:28px;">完善资料</h1>
-        <p class="flow-sub" style="margin-bottom:28px;">让晚安更了解你们</p>
+        <p class="flow-sub" style="margin-bottom:28px;">让 goodnight 更了解你们</p>
 
         <div class="flow-form">
           <label class="sw-label"><span>昵称</span>
@@ -388,7 +496,7 @@
           </label>
 
           <p class="sw-form-err" id="profileErr"></p>
-          <button type="button" class="sw-btn primary" id="profileSubmitBtn">进入晚安</button>
+          <button type="button" class="sw-btn primary" id="profileSubmitBtn">继续配对</button>
         </div>
       </div>
     `);
@@ -435,16 +543,25 @@
   function showPair() {
     const el = createFlowView('pairView', `
       <div class="flow-center" style="padding:36px 24px;">
-        <h1 class="flow-title" style="font-size:28px;">邀请另一半</h1>
-        <p class="flow-sub" style="margin-bottom:24px;">把配对码或二维码发给 ta</p>
+        <h1 class="flow-title" style="font-size:28px;">添加亲密的 Ta</h1>
+        <p class="flow-sub" style="margin-bottom:24px;">把配对码或二维码发给 ta，或输入 ta 的配对码</p>
 
-        <div class="pair-card">
-          <div class="pair-code-label">你的配对码</div>
+        <div class="pair-card linkup-card">
+          <div class="pair-download">↓</div>
+          <div class="pair-symbol">+=</div>
+          <div class="pair-code-label">匹配码</div>
           <div class="pair-code" id="pairCodeValue">—</div>
           <div class="pair-qr-wrap" id="pairQrWrap"></div>
+          <p class="pair-hint">goodnight 扫码添加我吧</p>
         </div>
 
-        <div class="flow-divider"><span>或输入对方的配对码</span></div>
+        <div class="pair-options">
+          <button type="button" class="pair-option" id="scanPairBtn"><span class="pair-option-icon blue">⌗</span><span><b>扫一扫</b><em>扫描 ta 的二维码加好友</em></span><i>›</i></button>
+          <button type="button" class="pair-option" id="contactsPairBtn"><span class="pair-option-icon purple">●</span><span><b>手机联系人</b><em>添加手机通讯录中的好友</em></span><i>›</i></button>
+          <button type="button" class="pair-option" id="qqPairBtn"><span class="pair-option-icon qq">Q</span><span><b>添加 QQ 好友</b><em>审核通过后开放分享</em></span><i>›</i></button>
+        </div>
+
+        <div class="flow-divider"><span>输入对方配对码</span></div>
 
         <div class="flow-form">
           <input type="tel" id="joinCodeInput" class="sw-input" placeholder="6-8 位配对码" maxlength="8" inputmode="numeric" pattern="[0-9]*" />
@@ -458,6 +575,8 @@
       try {
         const data = await API.get('/api/pair/code');
         $('#pairCodeValue').textContent = data.matchCode;
+        const user = Store.getState().user || {};
+        Store.saveUser({ ...user, matchCode: data.matchCode });
         const qr = qrcode(0, 'M');
         qr.addData(data.qrToken || data.matchCode);
         qr.make();
@@ -467,6 +586,10 @@
       }
     }
     loadCode();
+
+    $('#scanPairBtn').addEventListener('click', () => toast('扫码能力已预留，当前请先输入配对码'));
+    $('#contactsPairBtn').addEventListener('click', () => toast('联系人能力已预留，当前请先输入配对码'));
+    $('#qqPairBtn').addEventListener('click', () => toast('QQ 分享等审核通过后开放'));
 
     $('#joinPairBtn').addEventListener('click', async () => {
       const matchCode = $('#joinCodeInput').value.trim();
@@ -489,6 +612,7 @@
           } catch(e) {}
         }
         toast('配对成功');
+        await loadRoomData();
         showPermissions();
       } catch (e) {
         errEl.textContent = e.message || '配对失败';
@@ -539,23 +663,24 @@
 
     $('#enterMainBtn').addEventListener('click', async () => {
       try {
+        let locationReady = false;
         if (navigator.permissions) {
           const result = await navigator.permissions.query({ name: 'geolocation' });
-          if (result.state !== 'granted') {
-            toast('请先授权定位权限', 'error');
-            return;
-          }
+          locationReady = result.state === 'granted';
         } else if (navigator.geolocation) {
-          // fallback: try to get position
-          const ok = await new Promise((resolve) => {
+          locationReady = await new Promise((resolve) => {
             navigator.geolocation.getCurrentPosition(() => resolve(true), () => resolve(false), { timeout: 5000 });
           });
-          if (!ok) { toast('请先授权定位权限', 'error'); return; }
         }
+        if (!locationReady) toast('定位权限稍后也可以在系统设置中开启');
+        localStorage.setItem('goodnight_permissions_done', '1');
         localStorage.setItem('wanan_permissions_done', '1');
         enterMainApp();
       } catch (e) {
-        toast('权限检查失败，请手动确认', 'error');
+        toast('权限稍后也可以在系统设置中开启');
+        localStorage.setItem('goodnight_permissions_done', '1');
+        localStorage.setItem('wanan_permissions_done', '1');
+        enterMainApp();
       }
     });
   }
@@ -679,7 +804,7 @@
     const brandTitle = $('#brandTitle');
     if (brandTitle) {
       const taName = s.taName || (user && user.partner && user.partner.nickname) || 'ta';
-      brandTitle.textContent = `${s.meName || user && user.nickname || '我'} & ${taName}`;
+      brandTitle.textContent = `${s.meName || (user && user.nickname) || '我'} & ${taName}`;
     }
     const subTitle = $('#subTitle');
     if (subTitle) subTitle.textContent = Store.getState().room ? '同步中' : '还没配对';
@@ -773,10 +898,20 @@
     const distNote = $('#distanceNote');
     if (distNote) distNote.textContent = km != null ? '地球表面最短距离（Haversine）' : '对方开启定位后自动显示';
 
+    function parseJsonField(loc, key) {
+      if (!loc || !loc[key]) return null;
+      try {
+        return typeof loc[key] === 'string' ? JSON.parse(loc[key]) : loc[key];
+      } catch(e) {
+        return null;
+      }
+    }
+
     function batLine(loc) {
       if (!loc || !loc.battery) return '—';
       try {
-        const b = typeof loc.battery === 'string' ? JSON.parse(loc.battery) : loc.battery;
+        const b = parseJsonField(loc, 'battery');
+        if (!b) return '—';
         const icon = b.charging ? '⚡' : '🔋';
         const mins = Math.round((Date.now() - (b.updatedAt || Date.now())) / 60000);
         const timeDesc = mins < 1 ? '刚刚' : mins + ' 分钟前';
@@ -787,6 +922,22 @@
     if (meBat) meBat.textContent = batLine(meLoc);
     const taBat = $('#taBattery');
     if (taBat) taBat.textContent = batLine(otherLoc);
+
+    const meDevice = $('#meDevice');
+    if (meDevice) {
+      const meDeviceData = parseJsonField(meLoc, 'device');
+      meDevice.textContent = meDeviceData ? `${meDeviceData.label || '设备'} · ${meDeviceData.online ? '在线' : '离线'}` : '同步中';
+    }
+    const taNetwork = $('#taNetwork');
+    if (taNetwork) {
+      const taDeviceData = parseJsonField(otherLoc, 'device');
+      const network = taDeviceData && taDeviceData.network;
+      if (network && (network.effectiveType || network.downlink)) {
+        taNetwork.textContent = `${network.effectiveType || '网络'}${network.downlink ? ` · ${network.downlink}Mbps` : ''}`;
+      } else {
+        taNetwork.textContent = taDeviceData ? '在线' : '等待同步';
+      }
+    }
 
     const today = Utils.todayStr();
     const otherMood = moods.find(m => m.userId !== (user && user.id) && m.date === today);
@@ -1043,7 +1194,10 @@
     }
 
     if (navigator.connection) {
-      navigator.connection.addEventListener('change', updateNetworkStatus);
+      navigator.connection.addEventListener('change', () => {
+        updateNetworkStatus();
+        syncPresence();
+      });
     }
 
     setInterval(() => {
@@ -1126,11 +1280,30 @@
       }
     }
 
+    const partnerEl = $('#stPartnerDevice');
+    if (partnerEl) {
+      const user = Store.getState().user;
+      const otherLoc = Store.getState().locations.find(l => l.userId !== (user && user.id));
+      const parse = (value) => {
+        if (!value) return null;
+        try { return typeof value === 'string' ? JSON.parse(value) : value; } catch(e) { return null; }
+      };
+      const b = parse(otherLoc && otherLoc.battery);
+      const d = parse(otherLoc && otherLoc.device);
+      if (b || d) {
+        const bat = b ? `${b.charging ? '充电中' : '电量'} ${b.level}%` : '电量待同步';
+        const net = d && d.network ? (d.network.effectiveType || '在线') : (d && d.online ? '在线' : '网络待同步');
+        partnerEl.textContent = `${d && d.label ? d.label + ' · ' : ''}${bat} · ${net}`;
+      } else {
+        partnerEl.textContent = '等待 ta 开启 App 后同步';
+      }
+    }
+
     const trafficEl = $('#stTraffic');
-    if (trafficEl) trafficEl.textContent = '本设备暂不支持';
+    if (trafficEl) trafficEl.textContent = '需原生插件授权';
 
     const callsEl = $('#stCalls');
-    if (callsEl) callsEl.textContent = '本设备暂不支持';
+    if (callsEl) callsEl.textContent = '系统限制，暂不读取';
   }
 
   /* ========== EVENT BINDINGS ========== */
@@ -1373,6 +1546,7 @@
         Store.clearUser();
         Socket.disconnect();
         Store.setState({ room: null, wishes: [], anniversaries: [], moods: [], moments: [], locations: [], settings: { meName: '', taName: '', sinceDate: '', nextMeetDate: '' } });
+        localStorage.removeItem('goodnight_permissions_done');
         localStorage.removeItem('wanan_permissions_done');
         location.reload();
       });
@@ -1399,14 +1573,16 @@
 
   /* ========== BATTERY MONITOR (sync to server) ========== */
   function startBatteryMonitor() {
+    const pushDeviceOnly = () => syncPresence();
+    pushDeviceOnly();
+    window.addEventListener('online', pushDeviceOnly);
+    window.addEventListener('offline', pushDeviceOnly);
     if (!navigator.getBattery) return;
     navigator.getBattery().then(b => {
       const updateBat = () => {
-        const room = Store.getState().room;
-        if (!room) return;
-        API.put(`/api/room/${room.id}/location`, {
+        syncPresence({
           battery: { level: Math.round(b.level * 100), charging: b.charging, updatedAt: Date.now() }
-        }).catch(() => {});
+        });
       };
       updateBat();
       ['chargingchange', 'levelchange'].forEach(evt => b.addEventListener(evt, updateBat));
@@ -1534,17 +1710,15 @@
       return;
     }
 
-    if (!user.room && !user.partner) {
+    if (!user.room) {
       showPair();
       return;
     }
 
-    if (user.room) {
-      Store.setState({ room: user.room });
-      await loadRoomData();
-    }
+    Store.setState({ room: user.room });
+    await loadRoomData();
 
-    const permissionsDone = localStorage.getItem('wanan_permissions_done');
+    const permissionsDone = localStorage.getItem('goodnight_permissions_done') || localStorage.getItem('wanan_permissions_done');
     if (!permissionsDone) {
       showPermissions();
       return;

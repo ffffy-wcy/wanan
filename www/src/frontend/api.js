@@ -1,5 +1,5 @@
 /* =========================================================
-   晚安 api.js
+   goodnight api.js
    统一 API 模块，封装 fetch 请求、Token 管理和自动刷新
    ========================================================= */
 const API = {
@@ -11,12 +11,13 @@ const API = {
     this._baseInited = true;
 
     // 1. 用户手动设置过（登录页"设置服务器地址"）
-    const saved = localStorage.getItem('wanan_server');
+    const saved = localStorage.getItem('goodnight_server') || localStorage.getItem('wanan_server');
     if (saved) { this.BASE = saved; return; }
 
     // 2. 全局配置（config.js / 打包时注入）
-    if (typeof window !== 'undefined' && window.__WANAN_CONFIG__ && window.__WANAN_CONFIG__.API_BASE && !window.__WANAN_CONFIG__.API_BASE.startsWith('__API_BASE')) {
-      this.BASE = window.__WANAN_CONFIG__.API_BASE;
+    const cfg = (typeof window !== 'undefined' && (window.__GOODNIGHT_CONFIG__ || window.__WANAN_CONFIG__)) || null;
+    if (cfg && cfg.API_BASE && !cfg.API_BASE.startsWith('__API_BASE')) {
+      this.BASE = cfg.API_BASE;
       return;
     }
 
@@ -37,23 +38,29 @@ const API = {
 
   setServer(url) {
     this.BASE = url;
+    localStorage.setItem('goodnight_server', url);
     localStorage.setItem('wanan_server', url);
   },
 
   getToken() {
-    return localStorage.getItem('wanan_token');
+    return localStorage.getItem('goodnight_token') || localStorage.getItem('wanan_token');
   },
 
   getRefreshToken() {
-    return localStorage.getItem('wanan_refresh_token');
+    return localStorage.getItem('goodnight_refresh_token') || localStorage.getItem('wanan_refresh_token');
   },
 
   setTokens(accessToken, refreshToken) {
+    localStorage.setItem('goodnight_token', accessToken);
+    localStorage.setItem('goodnight_refresh_token', refreshToken);
     localStorage.setItem('wanan_token', accessToken);
     localStorage.setItem('wanan_refresh_token', refreshToken);
   },
 
   clearTokens() {
+    localStorage.removeItem('goodnight_token');
+    localStorage.removeItem('goodnight_refresh_token');
+    localStorage.removeItem('goodnight_user');
     localStorage.removeItem('wanan_token');
     localStorage.removeItem('wanan_refresh_token');
     localStorage.removeItem('wanan_user');

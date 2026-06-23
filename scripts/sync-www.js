@@ -12,7 +12,6 @@ const ROOT_FILES = [
   'styles.css',
   'manifest.json',
   'sw.js',
-  'worker.js',
   'icon.svg',
   'icon-maskable.svg',
   'privacy.html',
