@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#2a1810"/>
+  <g transform="translate(256 300)" fill="#b76e79">
+    <path d="M0 -100 C-100 -200 -260 -130 -210 0 C-160 110 0 200 0 200 C0 200 160 110 210 0 C260 -130 100 -200 0 -100 Z"/>
+  </g>
+  <text x="256" y="110" text-anchor="middle" font-family="Georgia, serif" font-size="58" fill="#f1e4d0" letter-spacing="8">OUR DAYS</text>
+</svg>

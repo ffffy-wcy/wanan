@@ -1,0 +1,34 @@
+# 密钥与证书
+*.jks
+*.keystore
+*.crt
+*.pem
+*.key
+
+# 安装包/临时文件
+*.msi
+*.apk
+*.aab
+
+# 依赖与构建产物
+node_modules/
+android/app/build/
+android/.gradle/
+android/captures/
+android/local.properties
+
+# 日志与数据库
+*.log
+prisma/dev.db
+prisma/dev.db-journal
+
+# 环境变量
+.env
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

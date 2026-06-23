@@ -1,0 +1,38 @@
+{
+  "name": "wanan",
+  "version": "1.0.0",
+  "description": "晚安 · 异地情侣数据同步 App",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "build": "npx prisma generate && npx prisma migrate deploy",
+    "postinstall": "npx prisma generate",
+    "test": "echo \"no tests configured\"",
+    "sync:www": "node scripts/sync-www.js",
+    "db:migrate": "npx prisma migrate dev --name init",
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@prisma/client": "^5.22.0",
+    "axios": "^1.7.9",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.7",
+    "express": "^4.22.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.2.0",
+    "nodemailer": "^9.0.1",
+    "playwright": "^1.61.0",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  }
+}

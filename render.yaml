@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: wanan-api
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install && npx prisma generate
+    startCommand: npx prisma migrate deploy && node src/server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:./data/dev.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: QQ_APP_ID
+        sync: false
+      - key: QQ_APP_KEY
+        sync: false
+      - key: QQ_REDIRECT_URI
+        sync: false
+    disk:
+      name: wanan-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1

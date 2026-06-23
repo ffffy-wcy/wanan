@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#2a1810" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>晚安</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Noto+Serif+SC:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='28'%3E❤️%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部栏 -->
+    <header class="topbar">
+      <div class="topbar-inner">
+        <span class="brand" id="brandTitle">晚安</span>
+        <span class="sub" id="subTitle">距离不是问题</span>
+      </div>
+    </header>
+
+    <!-- 内容区 -->
+    <main class="content">
+      <!-- 1. 首页 -->
+      <section class="view view-home active" data-view="home">
+        <div class="home-hero">
+          <div class="heart" aria-hidden="true">
+            <svg viewBox="0 0 64 64"><path d="M32 58s-24-14-24-34a14 14 0 0 1 24-10 14 14 0 0 1 24 10c0 20-24 34-24 34z" fill="currentColor"/></svg>
+          </div>
+          <p class="since-label">我们已经在一起</p>
+          <div class="days-number" id="daysNumber">0</div>
+          <p class="since-date" id="sinceDate">—</p>
+
+          <div class="breakdown">
+            <div class="b-item"><span class="b-num" id="bdMonths">0</span><span class="b-label">月</span></div>
+            <div class="b-sep"></div>
+            <div class="b-item"><span class="b-num" id="bdWeeks">0</span><span class="b-label">周</span></div>
+            <div class="b-sep"></div>
+            <div class="b-item"><span class="b-num" id="bdHours">0</span><span class="b-label">小时</span></div>
+          </div>
+
+          <div class="next-anniv" id="nextAnnivBox">
+            <div class="na-name" id="naName">—</div>
+            <div class="na-count"><span id="naDays">0</span><span class="na-unit">天后</span></div>
+          </div>
+        </div>
+
+        <div class="quote" id="dailyQuote">
+          <span class="q-mark">"</span>
+          <span class="q-text">愿所有的距离，都是下次相见的伏笔。</span>
+          <span class="q-mark right">"</span>
+        </div>
+      </section>
+
+      <!-- 2. 心愿清单 -->
+      <section class="view view-wish" data-view="wish">
+        <div class="view-head">
+          <h2>一起想做的事</h2>
+          <p class="muted">下次见面时，一起去完成它</p>
+        </div>
+        <form class="wish-form" id="wishForm">
+          <input type="text" id="wishText" placeholder="比如：一起去看海" required />
+          <button type="submit" class="primary">加上</button>
+        </form>
+        <ul class="wish-list" id="wishList"></ul>
+        <p class="wish-stat" id="wishStat"></p>
+      </section>
+
+      <!-- 3. 之间 -->
+      <section class="view view-meta" data-view="meta">
+        <div class="view-head">
+          <h2>之间</h2>
+          <p class="muted">两座城市的距离，和我们记得的日子</p>
+        </div>
+
+        <div class="distance-card">
+          <div class="cities">
+            <span id="cityMe">我的城市</span>
+            <span class="dot-rail"><span class="dot"></span><span class="rail"></span><span class="dot"></span></span>
+            <span id="cityTa">ta 的城市</span>
+          </div>
+          <div class="distance-num"><span id="distanceKm">—</span><span class="unit">km</span></div>
+          <p class="muted small loc-status" id="locStatus"></p>
+          <p class="muted small" id="distanceNote">对方开启定位后自动显示</p>
+          <p class="muted small" id="taMood" style="display:none;color:var(--accent-deep);"></p>
+          <div class="battery-row">
+            <div class="battery-cell"><span class="battery-label">我的电量</span><span id="meBattery">—</span></div>
+            <div class="battery-cell"><span class="battery-label">ta 的电量</span><span id="taBattery">—</span></div>
+          </div>
+        </div>
+
+        <div class="map-container" id="liveMapContainer">
+          <div id="liveMap"></div>
+          <p class="muted small map-status" id="mapStatus"></p>
+        </div>
+
+        <h3 class="section-h">值得记住的日子</h3>
+        <form class="anniv-form" id="annivForm">
+          <input type="text" id="annivName" placeholder="名字，比如：第一次见面" required />
+          <input type="date" id="annivDate" required />
+          <button type="submit" class="primary">添加</button>
+        </form>
+        <ul class="anniv-list" id="annivList"></ul>
+      </section>
+
+      <!-- 4. 心情打卡 -->
+      <section class="view view-mood" data-view="mood">
+        <div class="view-head">
+          <h2>今日心情</h2>
+          <p class="muted">记录每一天的颜色</p>
+        </div>
+        <div class="mood-picker" id="moodPicker">
+          <button type="button" data-mood="5" title="非常开心">😊</button>
+          <button type="button" data-mood="4" title="不错">🙂</button>
+          <button type="button" data-mood="3" title="平常">😐</button>
+          <button type="button" data-mood="2" title="有点低落">😔</button>
+          <button type="button" data-mood="1" title="很难过">😢</button>
+        </div>
+        <p class="mood-today muted" id="moodToday">今天还没有打卡</p>
+        <p class="mood-today" id="taMoodDisplay" style="display:none;color:var(--accent-deep);"></p>
+
+        <h3 class="section-h">最近 14 天</h3>
+        <div class="mood-strip" id="moodStrip"></div>
+
+        <h3 class="section-h">心情笔记</h3>
+        <form class="note-form" id="moodNoteForm">
+          <textarea id="moodNoteText" rows="2" placeholder="记一句今天的心情……"></textarea>
+          <button type="submit" class="ghost">保存笔记</button>
+        </form>
+        <ul class="mood-log" id="moodLog"></ul>
+      </section>
+
+      <!-- 5. 瞬 · 相册 -->
+      <section class="view view-moments" data-view="moments">
+        <div class="view-head">
+          <h2>瞬</h2>
+          <p class="muted">记录每一个想要记住的瞬间</p>
+        </div>
+        <button class="moment-create-btn" id="momentCreateBtn">
+          <span class="mcb-icon">+</span>
+          <span>记录一个瞬间</span>
+        </button>
+        <div class="moment-timeline" id="momentTimeline">
+          <div class="moment-empty" id="momentEmpty">
+            <div class="me-icon">✦</div>
+            <p>还没有瞬间<br>记录你们的第一个瞬间吧</p>
+          </div>
+        </div>
+
+        <div class="moment-modal" id="momentModal" style="display:none;">
+          <div class="moment-modal-backdrop"></div>
+          <div class="moment-modal-card">
+            <div class="mm-header">
+              <h3>记录瞬间</h3>
+              <button class="mm-close" id="mmClose">×</button>
+            </div>
+            <div class="mm-body">
+              <div class="mm-image-area" id="mmImageArea">
+                <input type="file" id="mmImageInput" accept="image/*" style="display:none;" />
+                <div class="mm-image-placeholder" id="mmImagePlaceholder">
+                  <span class="mm-upload-icon">📷</span>
+                  <span>点击选择照片</span>
+                </div>
+                <img id="mmImagePreview" style="display:none;width:100%;max-height:240px;object-fit:cover;border-radius:12px;" />
+              </div>
+              <textarea id="mmText" class="mm-textarea" placeholder="此时此刻，写下你想记住的……" maxlength="500" rows="3"></textarea>
+              <div class="mm-location" id="mmLocation">
+                <span class="mm-loc-icon">📍</span>
+                <span id="mmLocText">正在获取位置...</span>
+              </div>
+              <p class="mm-err" id="mmErr"></p>
+            </div>
+            <div class="mm-footer">
+              <button class="mm-cancel" id="mmCancel">取消</button>
+              <button class="mm-submit" id="mmSubmit">发布</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="moment-detail" id="momentDetail" style="display:none;">
+          <div class="md-backdrop"></div>
+          <div class="md-card">
+            <button class="md-close" id="mdClose">×</button>
+            <img id="mdImage" style="width:100%;border-radius:12px;" />
+            <p class="md-text" id="mdText"></p>
+            <p class="md-meta" id="mdMeta"></p>
+            <button class="md-delete" id="mdDelete" style="display:none;">删除</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. 状态 -->
+      <section class="view view-status" data-view="status">
+        <div class="view-head">
+          <h2>状态</h2>
+          <p class="muted">看看手机今天陪你多久</p>
+        </div>
+        <div class="status-grid" id="statusGrid">
+          <div class="status-card"><span class="status-icon">⏳</span><span class="status-label">今日使用</span><span class="status-value" id="stUsage">—</span></div>
+          <div class="status-card"><span class="status-icon">📶</span><span class="status-label">网络速度</span><span class="status-value" id="stSpeed">—</span></div>
+          <div class="status-card"><span class="status-icon">🔋</span><span class="status-label">电量</span><span class="status-value" id="stBattery">—</span></div>
+          <div class="status-card"><span class="status-icon">💾</span><span class="status-label">存储占用</span><span class="status-value" id="stStorage">—</span></div>
+          <div class="status-card wide"><span class="status-icon">📡</span><span class="status-label">流量使用</span><span class="status-value" id="stTraffic">本设备暂不支持</span></div>
+          <div class="status-card wide"><span class="status-icon">📞</span><span class="status-label">通话记录</span><span class="status-value" id="stCalls">本设备暂不支持</span></div>
+        </div>
+      </section>
+
+      <!-- 7. 设置 -->
+      <section class="view view-settings" data-view="settings">
+        <div class="view-head">
+          <h2>设置</h2>
+          <p class="muted">简单一点，刚刚好</p>
+        </div>
+
+        <div class="settings-card">
+          <h3 class="section-h">昵称</h3>
+          <input type="text" id="sMeName" class="sw-input" placeholder="你的昵称" maxlength="20" />
+          <p class="sw-form-err" id="sNameErr"></p>
+
+          <h3 class="section-h">个人中心</h3>
+          <button type="button" class="sw-btn ghost" id="profileCenterBtn">查看个人资料</button>
+
+          <h3 class="section-h">配对码</h3>
+          <div class="pair-code-display" id="pairCodeDisplay">未配对</div>
+          <button type="button" class="sw-btn ghost" id="unpairBtn" style="margin-top:10px;color:var(--accent-deep);">解除配对</button>
+
+          <h3 class="section-h">账号</h3>
+          <button type="button" class="sw-btn ghost" id="logoutBtn">退出登录</button>
+        </div>
+
+        <div style="margin-top:20px;text-align:center;display:flex;gap:16px;justify-content:center;">
+          <a href="privacy.html" style="color:var(--ink-mute);font-size:12px;text-decoration:none;">隐私政策</a>
+          <a href="terms.html" style="color:var(--ink-mute);font-size:12px;text-decoration:none;">服务条款</a>
+        </div>
+      </section>
+    </main>
+
+    <!-- 底部导航 -->
+    <nav class="tabbar" role="tablist">
+      <button class="tab active" data-target="home" role="tab">
+        <span class="ic">❤</span><span class="lb">首页</span>
+      </button>
+      <button class="tab" data-target="wish" role="tab">
+        <span class="ic">✦</span><span class="lb">心愿</span>
+      </button>
+      <button class="tab" data-target="meta" role="tab">
+        <span class="ic">◉</span><span class="lb">之间</span>
+      </button>
+      <button class="tab" data-target="mood" role="tab">
+        <span class="ic">☺</span><span class="lb">心情</span>
+      </button>
+      <button class="tab" data-target="moments" role="tab">
+        <span class="ic">◎</span><span class="lb">瞬</span>
+      </button>
+      <button class="tab" data-target="status" role="tab">
+        <span class="ic">◈</span><span class="lb">状态</span>
+      </button>
+      <button class="tab" data-target="settings" role="tab">
+        <span class="ic">⚙</span><span class="lb">设置</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <script src="src/frontend/utils.js"></script>
+  <script src="src/frontend/config.js"></script>
+  <script src="src/frontend/store.js"></script>
+  <script src="src/frontend/api.js"></script>
+  <script src="src/frontend/socket.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          String    @id @default(cuid())
+  platform    String    // "qq" | "sms" | "email"
+  openId      String?   @unique
+  unionId     String?
+  phone       String?   @unique
+  email       String?   @unique
+  nickname    String    @default("")
+  avatarUrl   String    @default("")
+  gender      String?   // "boy" | "girl"
+  anniversary DateTime?
+  partnerId   String?
+  matchCode   String?   @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  birthday    String?
+
+  room  Room? @relation("UserRoom")
+  roomB Room? @relation("UserRoomB")
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userA   User?   @relation("UserRoom", fields: [userAId], references: [id])
+  userAId String? @unique
+  userB   User?   @relation("UserRoomB", fields: [userBId], references: [id])
+  userBId String? @unique
+
+  meName       String @default("")
+  taName       String @default("")
+  sinceDate    String @default("")
+  nextMeetDate String @default("")
+
+  wishes        Wish[]
+  anniversaries Anniversary[]
+  moods         Mood[]
+  locations     Location[]
+  moments       Moment[]
+}
+
+model Wish {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id])
+  text      String
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Anniversary {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id])
+  name      String
+  date      String   // YYYY-MM-DD
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Mood {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id])
+  userId    String
+  level     Int      // 1-5
+  date      String   // YYYY-MM-DD
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, userId, date])
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id])
+  userId    String
+  city      String   @default("")
+  lat       String   @default("")
+  lng       String   @default("")
+  battery   String?
+  updatedAt DateTime @updatedAt
+}
+
+model Moment {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id])
+  userId    String
+  imageUrl  String
+  text      String   @default("")
+  location  String   @default("")
+  city      String   @default("")
+  lat       String   @default("")
+  lng       String   @default("")
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,13 @@
+- [x] 根目录敏感/无关文件（`gh.msi`、`wanan.jks`、`wanan.crt`）已安全移除，`.gitignore` 已更新
+- [x] `src/frontend/socket.js` 调试日志已清理，仅保留必要日志
+- [x] `src/frontend/webrtc.js` 调试日志已清理，仅保留必要日志
+- [x] `src/frontend/pairing.js` 调试日志已清理，仅保留必要日志
+- [x] `src/routes/pair.js` 中的 `Unpair snapshot` 日志已清理
+- [x] 废弃或无法维护的测试脚本（`test-smoke.js` / `tests.js`）已处理
+- [x] `app.js` 中重复的 DOM 辅助函数/事件绑定已合并或提取
+- [x] `app.js` 中未使用的变量与函数已删除
+- [x] `app.js` 中 P2P 与 OAuth 初始化路径已明确分离，互不穿插
+- [x] `package.json` 中新增 `sync:www` 脚本，根目录源文件可正确同步到 `www/`
+- [x] 本地浏览器访问 `http://localhost:3000` 无报错且页面渲染正常
+- [x] `./gradlew assembleRelease` 可成功构建 APK
+- [x] 清理后代码通过基础语法/运行检查，无新增错误
