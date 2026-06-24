@@ -78,6 +78,22 @@ app.put('/api/room/room1/settings', (_req, res) => res.json({
       contentType: 'application/javascript',
       body: 'window.qrcode=function(){return {addData(){},make(){},createImgTag(){return "<div data-test-qr>QR</div>"}}};',
     }));
+    await page.route('https://wanan-8kqw.onrender.com/**', async (route) => {
+      const req = route.request();
+      const target = new URL(req.url());
+      const response = await fetch(base + target.pathname + target.search, {
+        method: req.method(),
+        headers: {
+          'content-type': req.headers()['content-type'] || 'application/json',
+        },
+        body: req.method() === 'GET' || req.method() === 'HEAD' ? undefined : req.postData(),
+      });
+      route.fulfill({
+        status: response.status,
+        contentType: response.headers.get('content-type') || 'application/json',
+        body: await response.text(),
+      });
+    });
 
     await page.addInitScript(() => {
       Object.defineProperty(navigator, 'geolocation', {
@@ -90,19 +106,17 @@ app.put('/api/room/room1/settings', (_req, res) => res.json({
       });
       navigator.permissions = { query: async () => ({ state: 'granted' }) };
     });
-    await page.addInitScript((apiBase) => {
-      localStorage.setItem('goodnight_server', apiBase);
-      localStorage.setItem('wanan_server', apiBase);
-    }, base);
-
     await page.goto(base + '/index.html');
     await page.getByText('下一页').click();
     await page.getByText('下一页').click();
     await page.getByText('开始').click();
 
-    await page.getByPlaceholder('邮箱').fill('lover@example.com');
+    await page.getByPlaceholder('输入邮箱').fill('lover@example.com');
     await page.getByText('获取验证码').click();
-    await page.getByPlaceholder('6 位验证码').fill('618308');
+    const codeBoxes = page.locator('.code-box');
+    for (const [idx, digit] of Array.from('618308').entries()) {
+      await codeBoxes.nth(idx).fill(digit);
+    }
     await page.getByRole('button', { name: '登录', exact: true }).click();
 
     await page.getByPlaceholder('2-20 个字符').fill('小好');

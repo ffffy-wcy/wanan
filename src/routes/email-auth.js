@@ -43,23 +43,35 @@ async function sendVerificationEmail(to, code) {
   };
 
   if (resend) {
-    const { data, error } = await resend.emails.send({
-      from: `goodnight <${RESEND_FROM}>`,
-      ...message
-    });
-    if (error) {
-      console.error('Resend send error:', error);
-      throw new Error('邮件发送失败');
+    try {
+      const { data, error } = await resend.emails.send({
+        from: `goodnight <${RESEND_FROM}>`,
+        ...message
+      });
+      if (error) {
+        throw error;
+      }
+      return !!data;
+    } catch (err) {
+      console.error('Resend send error:', err);
+      if (!smtpTransporter) {
+        throw new Error('邮件发送失败，请检查 Resend 发件域名或收件邮箱限制');
+      }
+      console.warn('Resend failed, falling back to SMTP.');
     }
-    return !!data;
   }
 
   if (smtpTransporter) {
-    await smtpTransporter.sendMail({
-      from: `goodnight <${SMTP_FROM}>`,
-      ...message
-    });
-    return true;
+    try {
+      await smtpTransporter.sendMail({
+        from: `goodnight <${SMTP_FROM}>`,
+        ...message
+      });
+      return true;
+    } catch (err) {
+      console.error('SMTP send error:', err);
+      throw new Error('邮件发送失败，请检查 SMTP 配置');
+    }
   }
 
   return false;
@@ -129,8 +141,8 @@ router.post('/send', async (req, res) => {
         console.log(`[EMAIL] 邮箱 ${email} 的验证码是: ${code}`);
       }
     } catch (err) {
-      console.error('Resend send failed:', err);
-      return res.status(500).json({ error: '邮件发送失败，请检查 Resend 配置' });
+      console.error('Email send failed:', err);
+      return res.status(500).json({ error: err.message || '邮件暂时发不出去，请稍后再试' });
     }
 
     // 邮件发送成功后再保存验证码，避免用户收到废码

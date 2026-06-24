@@ -473,6 +473,147 @@
     });
   }
 
+  function showLogin() {
+    const el = createFlowView('loginView', `
+      <div class="login-shell">
+        <div class="login-ambient" aria-hidden="true"></div>
+        <section class="login-card" aria-label="goodnight 登录">
+          <div class="login-heart" id="loginHeart" aria-hidden="true">❤</div>
+          <h1 class="login-title">欢迎回到我们的小世界</h1>
+          <p class="login-sub">用邮箱验证码登录，进入只属于你们的晚安时刻</p>
+
+          <div class="login-form">
+            <div class="login-email-row">
+              <input type="email" id="loginEmail" class="login-input login-email" placeholder="输入邮箱" autocomplete="email" />
+              <button type="button" class="login-send-btn" id="sendEmailCodeBtn">获取验证码</button>
+            </div>
+
+            <div class="login-code-group" id="emailCodeBoxes" aria-label="6 位验证码">
+              <input class="code-box" inputmode="numeric" maxlength="1" aria-label="验证码第 1 位" />
+              <input class="code-box" inputmode="numeric" maxlength="1" aria-label="验证码第 2 位" />
+              <input class="code-box" inputmode="numeric" maxlength="1" aria-label="验证码第 3 位" />
+              <input class="code-box" inputmode="numeric" maxlength="1" aria-label="验证码第 4 位" />
+              <input class="code-box" inputmode="numeric" maxlength="1" aria-label="验证码第 5 位" />
+              <input class="code-box" inputmode="numeric" maxlength="1" aria-label="验证码第 6 位" />
+            </div>
+            <input type="hidden" id="emailCode" />
+
+            <p class="login-error" id="loginErr" aria-live="polite"></p>
+            <button type="button" class="login-primary" id="emailLoginBtn">登录</button>
+
+            <div class="login-divider"><span>或</span></div>
+            <button type="button" class="login-qq" id="qqLoginBtn"><span class="qq-mark">Q</span><span>QQ 登录</span></button>
+          </div>
+        </section>
+      </div>
+    `);
+
+    const sendBtn = $('#sendEmailCodeBtn');
+    const emailEl = $('#loginEmail');
+    const codeEl = $('#emailCode');
+    const errEl = $('#loginErr');
+    const codeBoxes = $$('.code-box', el);
+    const heartEl = $('#loginHeart');
+
+    API._initBase();
+
+    function showLoginError(message) {
+      errEl.textContent = message || '';
+      if (!message) return;
+      errEl.classList.remove('show');
+      void errEl.offsetWidth;
+      errEl.classList.add('show');
+      el.classList.remove('login-shake');
+      void el.offsetWidth;
+      el.classList.add('login-shake');
+    }
+
+    function syncCodeValue() {
+      const code = codeBoxes.map(input => input.value).join('');
+      codeEl.value = code;
+      if (code.length === 6) {
+        heartEl.classList.remove('code-complete');
+        void heartEl.offsetWidth;
+        heartEl.classList.add('code-complete');
+      }
+    }
+
+    codeBoxes.forEach((input, idx) => {
+      input.addEventListener('input', () => {
+        input.value = input.value.replace(/\D/g, '').slice(0, 1);
+        syncCodeValue();
+        if (input.value && idx < codeBoxes.length - 1) codeBoxes[idx + 1].focus();
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !input.value && idx > 0) codeBoxes[idx - 1].focus();
+      });
+      input.addEventListener('paste', (e) => {
+        const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+        if (!text) return;
+        e.preventDefault();
+        codeBoxes.forEach((box, i) => { box.value = text[i] || ''; });
+        syncCodeValue();
+        const next = Math.min(text.length, codeBoxes.length) - 1;
+        if (next >= 0) codeBoxes[next].focus();
+      });
+    });
+
+    function setCountdown(n) {
+      if (n > 0) {
+        sendBtn.textContent = n + 's';
+        sendBtn.disabled = true;
+        setTimeout(() => setCountdown(n - 1), 1000);
+      } else {
+        sendBtn.textContent = '获取验证码';
+        sendBtn.disabled = false;
+      }
+    }
+
+    sendBtn.addEventListener('click', async () => {
+      const email = emailEl.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showLoginError('请先输入正确的邮箱地址');
+        return;
+      }
+      showLoginError('');
+      sendBtn.disabled = true;
+      sendBtn.textContent = '发送中';
+      try {
+        await API.post('/api/auth/email/send', { email });
+        toast('验证码已发送');
+        codeBoxes[0].focus();
+        setCountdown(60);
+      } catch (e) {
+        showLoginError(e.message || '邮件暂时发不出去，请稍后再试');
+        sendBtn.disabled = false;
+        sendBtn.textContent = '获取验证码';
+      }
+    });
+
+    $('#emailLoginBtn').addEventListener('click', async () => {
+      const email = emailEl.value.trim();
+      const code = codeEl.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showLoginError('请先输入正确的邮箱地址'); return; }
+      if (!/^\d{6}$/.test(code)) { showLoginError('请输入 6 位验证码'); return; }
+      showLoginError('');
+      try {
+        const data = await API.post('/api/auth/email/login', { email, code });
+        API.setTokens(data.accessToken, data.refreshToken);
+        Store.saveUser(data.user);
+        toast('登录成功');
+        showProfile();
+      } catch (e) {
+        showLoginError(e.message || '登录失败，请稍后再试');
+      }
+    });
+
+    $('#qqLoginBtn').addEventListener('click', () => {
+      API.get('/api/auth/qq/url').then(data => {
+        window.location.href = data.url;
+      }).catch(() => toast('QQ 登录暂未开放', 'error'));
+    });
+  }
+
   function showProfile() {
     const user = Store.getState().user || {};
     const el = createFlowView('profileView', `
