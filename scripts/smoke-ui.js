@@ -106,11 +106,13 @@ app.put('/api/room/room1/settings', (_req, res) => res.json({
       });
       navigator.permissions = { query: async () => ({ state: 'granted' }) };
     });
-    await page.goto(base + '/index.html');
+    await page.goto(base + '/index.html', { waitUntil: 'domcontentloaded' });
     await page.getByText('下一页').click();
     await page.getByText('下一页').click();
     await page.getByText('开始').click();
 
+    await page.getByPlaceholder('输入邮箱').fill('lover@q');
+    await page.getByRole('option', { name: 'lover@qq.com' }).click();
     await page.getByPlaceholder('输入邮箱').fill('lover@example.com');
     await page.getByText('获取验证码').click();
     const codeBoxes = page.locator('.code-box');

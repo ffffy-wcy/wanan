@@ -484,7 +484,10 @@
 
           <div class="login-form">
             <div class="login-email-row">
-              <input type="email" id="loginEmail" class="login-input login-email" placeholder="输入邮箱" autocomplete="email" />
+              <div class="email-field">
+                <input type="email" id="loginEmail" class="login-input login-email" placeholder="输入邮箱" autocomplete="email" />
+                <div class="email-suggestions" id="emailSuggestions" role="listbox" aria-label="常用邮箱后缀"></div>
+              </div>
               <button type="button" class="login-send-btn" id="sendEmailCodeBtn">获取验证码</button>
             </div>
 
@@ -514,6 +517,8 @@
     const errEl = $('#loginErr');
     const codeBoxes = $$('.code-box', el);
     const heartEl = $('#loginHeart');
+    const emailSuggestions = $('#emailSuggestions');
+    const emailSuffixes = ['@qq.com', '@163.com', '@126.com', '@outlook.com', '@hotmail.com', '@gmail.com', '@icloud.com', '@foxmail.com', '@sina.com', '@yeah.net'];
 
     API._initBase();
 
@@ -537,6 +542,52 @@
         heartEl.classList.add('code-complete');
       }
     }
+
+    function hideEmailSuggestions() {
+      emailSuggestions.classList.remove('show');
+      emailSuggestions.innerHTML = '';
+    }
+
+    function renderEmailSuggestions() {
+      const raw = emailEl.value.trim();
+      if (!raw || raw.startsWith('@') || raw.includes(' ')) {
+        hideEmailSuggestions();
+        return;
+      }
+
+      const atIndex = raw.indexOf('@');
+      const local = atIndex >= 0 ? raw.slice(0, atIndex) : raw;
+      const typedDomain = atIndex >= 0 ? raw.slice(atIndex) : '';
+      if (!local) {
+        hideEmailSuggestions();
+        return;
+      }
+
+      const matches = emailSuffixes
+        .filter(suffix => !typedDomain || suffix.startsWith(typedDomain.toLowerCase()))
+        .slice(0, 5);
+      if (!matches.length) {
+        hideEmailSuggestions();
+        return;
+      }
+
+      emailSuggestions.innerHTML = matches
+        .map(suffix => `<button type="button" class="email-suggestion" role="option" data-email="${Utils.escapeHtml(local + suffix)}">${Utils.escapeHtml(local + suffix)}</button>`)
+        .join('');
+      emailSuggestions.classList.add('show');
+    }
+
+    emailEl.addEventListener('input', renderEmailSuggestions);
+    emailEl.addEventListener('focus', renderEmailSuggestions);
+    emailEl.addEventListener('blur', () => setTimeout(hideEmailSuggestions, 120));
+    emailSuggestions.addEventListener('mousedown', (e) => e.preventDefault());
+    emailSuggestions.addEventListener('click', (e) => {
+      const option = e.target.closest('.email-suggestion');
+      if (!option) return;
+      emailEl.value = option.dataset.email || option.textContent.trim();
+      hideEmailSuggestions();
+      sendBtn.focus();
+    });
 
     codeBoxes.forEach((input, idx) => {
       input.addEventListener('input', () => {

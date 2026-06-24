@@ -1330,9 +1330,14 @@ button.ghost:hover, .sw-btn.ghost:hover { color: var(--accent-deep); border-colo
 
 .login-email-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 96px;
+  grid-template-columns: minmax(0, 1fr) 88px;
   gap: 10px;
   align-items: center;
+}
+
+.email-field {
+  position: relative;
+  min-width: 0;
 }
 
 .login-input,
@@ -1352,7 +1357,54 @@ button.ghost:hover, .sw-btn.ghost:hover { color: var(--accent-deep); border-colo
 }
 
 .login-input {
+  width: 100%;
   padding: 0 18px;
+}
+
+.email-suggestions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 4;
+  display: none;
+  padding: 6px;
+  border: 1px solid rgba(142, 120, 124, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 252, 247, 0.92);
+  box-shadow: 0 18px 42px rgba(137, 102, 91, 0.13);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transform-origin: top center;
+}
+
+.email-suggestions.show {
+  display: block;
+  animation: loginSuggest 160ms ease both;
+}
+
+.email-suggestion {
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: #6d6066;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 300;
+  text-align: left;
+  padding: 0 12px;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.email-suggestion:hover,
+.email-suggestion:focus {
+  background: rgba(216, 148, 159, 0.12);
+  color: #55474e;
+  outline: none;
+  transform: translateX(2px);
 }
 
 .login-input::placeholder,
@@ -1512,9 +1564,14 @@ button.ghost:hover, .sw-btn.ghost:hover { color: var(--accent-deep); border-colo
   72% { transform: translateX(-2px); }
 }
 
+@keyframes loginSuggest {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @media (max-width: 360px) {
   .login-card { padding: 24px 16px 20px; border-radius: 28px; }
-  .login-email-row { grid-template-columns: minmax(0, 1fr) 88px; gap: 8px; }
+  .login-email-row { grid-template-columns: minmax(0, 1fr) 78px; gap: 8px; }
   .login-send-btn { font-size: 12px; }
   .login-code-group { gap: 6px; }
   .code-box { height: 52px; border-radius: 18px; }

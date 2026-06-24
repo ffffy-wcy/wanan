@@ -14,6 +14,22 @@ const { signAccessToken, signRefreshToken } = require('../utils/jwt.js');
 
 const router = Router();
 
+const APP_NAME = process.env.APP_NAME || 'goodnight';
+
+const outlookTransporter = process.env.EMAIL_USER && process.env.EMAIL_PASS
+  ? nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || 'smtp.office365.com',
+      port: Number(process.env.EMAIL_PORT || 587),
+      secure: String(process.env.EMAIL_PORT || 587) === '465',
+      requireTLS: String(process.env.EMAIL_PORT || 587) !== '465',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    })
+  : null;
+const OUTLOOK_FROM = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev';
 
@@ -37,15 +53,47 @@ function normalizeEmail(value) {
 async function sendVerificationEmail(to, code) {
   const message = {
     to,
-    subject: '【goodnight】您的验证码',
-    text: `您的 goodnight 验证码是：${code}，5 分钟内有效。`,
-    html: `<p>您的 goodnight 验证码是：<strong>${code}</strong></p><p>5 分钟内有效，请勿泄露给他人。</p>`
+    subject: `【${APP_NAME}】您的验证码`,
+    text: `您的 ${APP_NAME} 验证码是：${code}，5 分钟内有效。`,
+    html: `<p>您的 ${APP_NAME} 验证码是：<strong>${code}</strong></p><p>5 分钟内有效，请勿泄露给他人。</p>`
   };
+
+  if (outlookTransporter) {
+    try {
+      await outlookTransporter.sendMail({
+        from: `${APP_NAME} <${OUTLOOK_FROM}>`,
+        ...message
+      });
+      return true;
+    } catch (err) {
+      console.error('Outlook SMTP send error:', err);
+      if (!smtpTransporter && !resend) {
+        throw new Error('邮件发送失败，请检查 Outlook 发件箱配置');
+      }
+      console.warn('Outlook SMTP failed, falling back to legacy email providers.');
+    }
+  }
+
+  if (smtpTransporter) {
+    try {
+      await smtpTransporter.sendMail({
+        from: `${APP_NAME} <${SMTP_FROM}>`,
+        ...message
+      });
+      return true;
+    } catch (err) {
+      console.error('SMTP send error:', err);
+      if (!resend) {
+        throw new Error('邮件发送失败，请检查 SMTP 配置');
+      }
+      console.warn('SMTP failed, falling back to Resend.');
+    }
+  }
 
   if (resend) {
     try {
       const { data, error } = await resend.emails.send({
-        from: `goodnight <${RESEND_FROM}>`,
+        from: `${APP_NAME} <${RESEND_FROM}>`,
         ...message
       });
       if (error) {
@@ -54,23 +102,10 @@ async function sendVerificationEmail(to, code) {
       return !!data;
     } catch (err) {
       console.error('Resend send error:', err);
-      if (!smtpTransporter) {
+      if (!outlookTransporter && !smtpTransporter) {
         throw new Error('邮件发送失败，请检查 Resend 发件域名或收件邮箱限制');
       }
-      console.warn('Resend failed, falling back to SMTP.');
-    }
-  }
-
-  if (smtpTransporter) {
-    try {
-      await smtpTransporter.sendMail({
-        from: `goodnight <${SMTP_FROM}>`,
-        ...message
-      });
-      return true;
-    } catch (err) {
-      console.error('SMTP send error:', err);
-      throw new Error('邮件发送失败，请检查 SMTP 配置');
+      throw new Error('邮件发送失败，请稍后再试');
     }
   }
 
