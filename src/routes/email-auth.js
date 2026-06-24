@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Router } = require('express');
 const { Resend } = require('resend');
 const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const {
   PrismaClientKnownRequestError,
   PrismaClientUnknownRequestError,
@@ -16,19 +17,10 @@ const router = Router();
 
 const APP_NAME = process.env.APP_NAME || 'goodnight';
 
-const outlookTransporter = process.env.EMAIL_USER && process.env.EMAIL_PASS
-  ? nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.office365.com',
-      port: Number(process.env.EMAIL_PORT || 587),
-      secure: String(process.env.EMAIL_PORT || 587) === '465',
-      requireTLS: String(process.env.EMAIL_PORT || 587) !== '465',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    })
-  : null;
-const OUTLOOK_FROM = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
+const SENDGRID_FROM = process.env.SENDER_EMAIL || 'noreply@example.com';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev';
@@ -58,19 +50,19 @@ async function sendVerificationEmail(to, code) {
     html: `<p>您的 ${APP_NAME} 验证码是：<strong>${code}</strong></p><p>5 分钟内有效，请勿泄露给他人。</p>`
   };
 
-  if (outlookTransporter) {
+  if (process.env.SENDGRID_API_KEY) {
     try {
-      await outlookTransporter.sendMail({
-        from: `${APP_NAME} <${OUTLOOK_FROM}>`,
+      await sgMail.send({
+        from: `${APP_NAME} <${SENDGRID_FROM}>`,
         ...message
       });
       return true;
     } catch (err) {
-      console.error('Outlook SMTP send error:', err);
+      console.error('SendGrid send error:', err);
       if (!smtpTransporter && !resend) {
-        throw new Error('邮件发送失败，请检查 Outlook 发件箱配置');
+        throw new Error('邮件发送失败，请检查 SendGrid 发件邮箱或域名验证');
       }
-      console.warn('Outlook SMTP failed, falling back to legacy email providers.');
+      console.warn('SendGrid failed, falling back to legacy email providers.');
     }
   }
 
@@ -102,7 +94,7 @@ async function sendVerificationEmail(to, code) {
       return !!data;
     } catch (err) {
       console.error('Resend send error:', err);
-      if (!outlookTransporter && !smtpTransporter) {
+      if (!smtpTransporter) {
         throw new Error('邮件发送失败，请检查 Resend 发件域名或收件邮箱限制');
       }
       throw new Error('邮件发送失败，请稍后再试');
@@ -172,7 +164,7 @@ router.post('/send', async (req, res) => {
     try {
       const sent = await sendVerificationEmail(email, code);
       if (!sent) {
-        // 未配置 RESEND_API_KEY 时回退到控制台输出
+        // 未配置任何邮件服务时回退到控制台输出
         console.log(`[EMAIL] 邮箱 ${email} 的验证码是: ${code}`);
       }
     } catch (err) {
